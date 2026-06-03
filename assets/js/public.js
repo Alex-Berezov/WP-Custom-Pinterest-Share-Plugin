@@ -165,7 +165,7 @@
                 }
             }
 
-            const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(targetUrl)}&media=${encodeURIComponent(mediaUrl)}&description=${encodeURIComponent(mergedDescription)}`;
+            const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(targetUrl)}&media=${encodeURIComponent(mediaUrl)}&description=${encodeURIComponent(mergedDescription)}&title=${encodeURIComponent(title)}`;
 
             window.open(pinterestUrl, 'Pinterest', 'width=750,height=600,toolbar=0,status=0');
             closeModal();
