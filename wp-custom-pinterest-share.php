@@ -23,14 +23,14 @@ function wpcps_enqueue_public_assets() {
 			'wpcps-public-css',
 			plugin_dir_url( __FILE__ ) . 'assets/css/public.css',
 			array(),
-			time() // Cache busting during development/testing
+			'1.0.1' // Stable release version
 		);
 
 		wp_enqueue_script(
 			'wpcps-public-js',
 			plugin_dir_url( __FILE__ ) . 'assets/js/public.js',
 			array(),
-			time(), // Cache busting during development/testing
+			'1.0.1', // Stable release version
 			false // Load in header
 		);
 	}

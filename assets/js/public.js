@@ -1,8 +1,6 @@
 /**
  * WP Custom Pinterest Share Plugin Script
  */
-console.log('wpcps: Script file parsed.');
-
 (function() {
     'use strict';
 
@@ -17,8 +15,6 @@ console.log('wpcps: Script file parsed.');
      */
     function createModal() {
         if (modalOverlay) return;
-
-        console.log('wpcps: Creating modal HTML.');
 
         // Create overlay element
         modalOverlay = document.createElement('div');
@@ -202,8 +198,6 @@ console.log('wpcps: Script file parsed.');
     function createGlobalButton() {
         if (globalPinButton) return;
 
-        console.log('wpcps: Creating global Pin button.');
-
         globalPinButton = document.createElement('button');
         globalPinButton.type = 'button';
         globalPinButton.className = 'wpcps-btn';
@@ -269,16 +263,13 @@ console.log('wpcps: Script file parsed.');
             height = parseInt(img.getAttribute('data-height'));
         }
 
-        const valid = width >= 200 && height >= 200;
-        console.log('wpcps: Image size check. Dimensions:', width, 'x', height, 'Valid:', valid, 'Src:', img.src);
-        return valid;
+        return width >= 200 && height >= 200;
     }
 
     /**
      * Initializes hover handlers.
      */
     function initHoverHandlers() {
-        console.log('wpcps: Initializing hover handlers.');
         const selectors = [
             '.single_content img',
             '.single-content img',
@@ -293,7 +284,6 @@ console.log('wpcps: Script file parsed.');
         document.addEventListener('mouseover', (e) => {
             const target = e.target;
             if (target && target.tagName === 'IMG') {
-                console.log('wpcps: Mouseover on image:', target.src || target.getAttribute('data-src'));
                 let isMatch = false;
                 for (let i = 0; i < selectors.length; i++) {
                     if (target.matches(selectors[i])) {
@@ -302,7 +292,6 @@ console.log('wpcps: Script file parsed.');
                     }
                 }
 
-                console.log('wpcps: Image matched content selector:', isMatch);
                 if (isMatch && isValidImage(target)) {
                     showPinButton(target);
                 }
@@ -320,11 +309,9 @@ console.log('wpcps: Script file parsed.');
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('wpcps: DOMContentLoaded. Initializing...');
             initHoverHandlers();
         });
     } else {
-        console.log('wpcps: DOM already ready. Initializing...');
         initHoverHandlers();
     }
 
