@@ -2,8 +2,8 @@
 /**
  * Plugin Name: WordPress Custom Pinterest Share Plugin
  * Description: Allows site administrators to selectively pin images from the frontend to Pinterest using a custom modal window.
- * Version: 1.0.0
- * Author: Antigravity
+ * Version: 1.0.1
+ * Author: Alex Berezov
  * Text Domain: wp-custom-pinterest-share
  * License: GPL2
  */
