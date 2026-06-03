@@ -1,21 +1,7 @@
 /* WP Custom Pinterest Share Plugin Styles */
 
-.wpcps-wrapper {
-    position: relative;
-    display: inline-block;
-    max-width: 100%;
-}
-
-.wpcps-wrapper img {
-    display: block;
-    max-width: 100%;
-    height: auto;
-}
-
 .wpcps-btn {
     position: absolute;
-    top: 15px;
-    left: 15px;
     background-color: #E60023;
     color: #ffffff !important;
     border: none;
@@ -32,8 +18,8 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.2s ease, background-color 0.2s ease;
-    z-index: 99;
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.1s ease, background-color 0.2s ease;
+    z-index: 9999;
     text-decoration: none;
 }
 
@@ -42,29 +28,9 @@
     transform: scale(1.05);
 }
 
-.wpcps-wrapper:hover .wpcps-btn {
+.wpcps-btn.wpcps-visible {
     opacity: 1;
     visibility: visible;
-}
-
-/* Handle WordPress block alignment wrapping support */
-.wpcps-wrapper.aligncenter {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
-}
-
-.wpcps-wrapper.alignleft {
-    float: left;
-    margin-right: 1.5em;
-    margin-bottom: 1.5em;
-}
-
-.wpcps-wrapper.alignright {
-    float: right;
-    margin-left: 1.5em;
-    margin-bottom: 1.5em;
 }
 
 /* MODAL STYLES */
@@ -294,4 +260,3 @@
 .wpcps-modal-btn-pin:hover {
     background-color: #ad081b;
 }
-

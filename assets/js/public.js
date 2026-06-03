@@ -4,9 +4,11 @@
 (function() {
     'use strict';
 
-    // Modal elements references
+    // References to DOM elements
     let modalOverlay = null;
     let currentImage = null;
+    let globalPinButton = null;
+    let hoverTimer = null;
 
     /**
      * Creates and injects the modal HTML structure into the document.
@@ -107,7 +109,6 @@
 
         const closeModal = () => {
             modalOverlay.classList.remove('wpcps-active');
-            // Clear inputs on close
             inputTitle.value = '';
             inputDesc.value = '';
             titleCounter.textContent = '0 / 100';
@@ -133,7 +134,6 @@
             const title = inputTitle.value.trim();
             const desc = inputDesc.value.trim();
             
-            // Text merging logic
             let mergedDescription = '';
             if (title && desc) {
                 mergedDescription = `${title}\n\n${desc}`;
@@ -141,7 +141,6 @@
                 mergedDescription = title || desc;
             }
 
-            // Target URL Selection
             let targetUrl = window.location.href;
             const selectedLinkType = document.querySelector('input[name="wpcps-link-type"]:checked').value;
             if (selectedLinkType === 'custom') {
@@ -151,16 +150,27 @@
                 }
             }
 
-            // Image URL
-            const mediaUrl = currentImage.src;
+            // Extract the real source of the image (checking data-src for lazy loaded ones)
+            let mediaUrl = currentImage.getAttribute('data-src') || currentImage.src;
+            if (mediaUrl.startsWith('data:')) {
+                // If it's a base64 placeholder, fallback to src
+                mediaUrl = currentImage.src;
+            }
 
-            // Compile URL
+            // Handle absolute URL conversion if relative
+            if (mediaUrl && !mediaUrl.startsWith('http://') && !mediaUrl.startsWith('https://')) {
+                if (mediaUrl.startsWith('//')) {
+                    mediaUrl = window.location.protocol + mediaUrl;
+                } else if (mediaUrl.startsWith('/')) {
+                    mediaUrl = window.location.origin + mediaUrl;
+                } else {
+                    mediaUrl = window.location.origin + '/' + mediaUrl;
+                }
+            }
+
             const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(targetUrl)}&media=${encodeURIComponent(mediaUrl)}&description=${encodeURIComponent(mergedDescription)}`;
 
-            // Popup execution
             window.open(pinterestUrl, 'Pinterest', 'width=750,height=600,toolbar=0,status=0');
-
-            // Close modal
             closeModal();
         });
     }
@@ -172,9 +182,14 @@
         createModal();
         currentImage = img;
 
+        let imgSrc = img.getAttribute('data-src') || img.src;
+        if (imgSrc.startsWith('data:')) {
+            imgSrc = img.src;
+        }
+
         // Set preview content
-        document.getElementById('wpcps-preview-thumb').src = img.src;
-        document.getElementById('wpcps-preview-src').textContent = img.src;
+        document.getElementById('wpcps-preview-thumb').src = imgSrc;
+        document.getElementById('wpcps-preview-src').textContent = imgSrc;
 
         // Show modal
         setTimeout(() => {
@@ -183,10 +198,91 @@
     }
 
     /**
-     * Initializes the hover buttons on valid content images.
+     * Creates the global "Pin it" button.
      */
-    function initImageButtons() {
+    function createGlobalButton() {
+        if (globalPinButton) return;
+
+        globalPinButton = document.createElement('button');
+        globalPinButton.type = 'button';
+        globalPinButton.className = 'wpcps-btn';
+        globalPinButton.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.08 3.16 9.4 7.63 11.16-.1-.95-.2-2.4.04-3.43.22-.93 1.4-5.94 1.4-5.94s-.36-.72-.36-1.78c0-1.66.96-2.9 2.16-2.9 1.02 0 1.51.77 1.51 1.68 0 1.03-.65 2.56-.99 3.99-.28 1.18.59 2.15 1.76 2.15 2.1 0 3.73-2.22 3.73-5.43 0-2.84-2.04-4.83-4.96-4.83-3.38 0-5.36 2.54-5.36 5.15 0 1.02.39 2.12.88 2.72.1.12.11.23.08.35-.09.37-.29 1.18-.33 1.34-.05.21-.18.26-.42.15-1.57-.73-2.55-3.02-2.55-4.86 0-3.96 2.87-7.6 8.3-7.6 4.36 0 7.74 3.1 7.74 7.25 0 4.33-2.73 7.82-6.52 7.82-1.27 0-2.47-.66-2.88-1.44l-.78 2.99c-.28 1.09-1.05 2.45-1.56 3.28C10.15 23.83 11.06 24 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0z"/></svg><span>Pin it</span>';
+
+        globalPinButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentImage) {
+                openPinterestModal(currentImage);
+            }
+        });
+
+        // Clear hide timer when entering the button
+        globalPinButton.addEventListener('mouseenter', () => {
+            clearTimeout(hoverTimer);
+        });
+
+        // Hide button when leaving the button
+        globalPinButton.addEventListener('mouseleave', () => {
+            hideButtonWithDelay();
+        });
+
+        document.body.appendChild(globalPinButton);
+    }
+
+    /**
+     * Positions and shows the pin button over the specified image.
+     */
+    function showPinButton(img) {
+        createGlobalButton();
+        clearTimeout(hoverTimer);
+        currentImage = img;
+
+        const rect = img.getBoundingClientRect();
+        
+        // Position relative to document
+        globalPinButton.style.top = `${rect.top + window.scrollY + 10}px`;
+        globalPinButton.style.left = `${rect.left + window.scrollX + 10}px`;
+        globalPinButton.classList.add('wpcps-visible');
+    }
+
+    /**
+     * Hides the pin button with a short delay.
+     */
+    function hideButtonWithDelay() {
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(() => {
+            if (globalPinButton) {
+                globalPinButton.classList.remove('wpcps-visible');
+            }
+        }, 300);
+    }
+
+    /**
+     * Validates if an image meets the dimensions criteria.
+     */
+    function isValidImage(img) {
+        // First check standard attributes or style dimensions
+        let width = img.naturalWidth || img.clientWidth || parseInt(img.getAttribute('width')) || 0;
+        let height = img.naturalHeight || img.clientHeight || parseInt(img.getAttribute('height')) || 0;
+
+        // If it's a lazyloaded image, it might have data-width/data-height attributes
+        if (width < 200 && img.getAttribute('data-width')) {
+            width = parseInt(img.getAttribute('data-width'));
+        }
+        if (height < 200 && img.getAttribute('data-height')) {
+            height = parseInt(img.getAttribute('data-height'));
+        }
+
+        return width >= 200 && height >= 200;
+    }
+
+    /**
+     * Initializes hover handlers.
+     */
+    function initHoverHandlers() {
         const selectors = [
+            '.single_content img',
+            '.single-content img',
             '.entry-content img',
             'article img',
             '.post img',
@@ -194,63 +290,41 @@
             '.post-content img',
             '.wp-block-image img'
         ];
-        
-        const images = document.querySelectorAll(selectors.join(', '));
-        
-        images.forEach(img => {
-            if (img.classList.contains('wpcps-processed') || img.closest('.wpcps-wrapper')) {
-                return;
-            }
-            
-            const setupWrapper = () => {
-                if (img.naturalWidth < 200 || img.naturalHeight < 200) {
-                    return;
-                }
-                
-                img.classList.add('wpcps-processed');
-                
-                const wrapper = document.createElement('div');
-                wrapper.className = 'wpcps-wrapper';
-                
-                const alignments = ['alignleft', 'alignright', 'aligncenter', 'alignnone', 'size-full', 'size-medium', 'size-large'];
-                alignments.forEach(cls => {
-                    if (img.classList.contains(cls)) {
-                        wrapper.classList.add(cls);
-                        img.classList.remove(cls);
+
+        // Attach event listeners using event delegation for dynamic compatibility
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target;
+            if (target && target.tagName === 'IMG') {
+                // Check if the image matches our content selectors
+                let isMatch = false;
+                for (let i = 0; i < selectors.length; i++) {
+                    if (target.matches(selectors[i])) {
+                        isMatch = true;
+                        break;
                     }
-                });
-                
-                if (img.parentNode) {
-                    img.parentNode.insertBefore(wrapper, img);
-                    wrapper.appendChild(img);
-                    
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'wpcps-btn';
-                    button.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.08 3.16 9.4 7.63 11.16-.1-.95-.2-2.4.04-3.43.22-.93 1.4-5.94 1.4-5.94s-.36-.72-.36-1.78c0-1.66.96-2.9 2.16-2.9 1.02 0 1.51.77 1.51 1.68 0 1.03-.65 2.56-.99 3.99-.28 1.18.59 2.15 1.76 2.15 2.1 0 3.73-2.22 3.73-5.43 0-2.84-2.04-4.83-4.96-4.83-3.38 0-5.36 2.54-5.36 5.15 0 1.02.39 2.12.88 2.72.1.12.11.23.08.35-.09.37-.29 1.18-.33 1.34-.05.21-.18.26-.42.15-1.57-.73-2.55-3.02-2.55-4.86 0-3.96 2.87-7.6 8.3-7.6 4.36 0 7.74 3.1 7.74 7.25 0 4.33-2.73 7.82-6.52 7.82-1.27 0-2.47-.66-2.88-1.44l-.78 2.99c-.28 1.09-1.05 2.45-1.56 3.28C10.15 23.83 11.06 24 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0z"/></svg><span>Pin it</span>';
-                    
-                    button.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        openPinterestModal(img);
-                    });
-                    
-                    wrapper.appendChild(button);
                 }
-            };
-            
-            if (img.complete) {
-                setupWrapper();
-            } else {
-                img.addEventListener('load', setupWrapper);
+
+                if (isMatch && isValidImage(target)) {
+                    showPinButton(target);
+                }
+            }
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const target = e.target;
+            if (target && target.tagName === 'IMG') {
+                hideButtonWithDelay();
             }
         });
     }
 
+    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initImageButtons);
+        document.addEventListener('DOMContentLoaded', () => {
+            initHoverHandlers();
+        });
     } else {
-        initImageButtons();
+        initHoverHandlers();
     }
 
     window.wpcpsOpenPinterestModal = openPinterestModal;
