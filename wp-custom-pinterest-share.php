@@ -31,8 +31,21 @@ function wpcps_enqueue_public_assets() {
 			plugin_dir_url( __FILE__ ) . 'assets/js/public.js',
 			array(),
 			time(), // Cache busting during development/testing
-			true // Load in footer
+			false // Load in header
 		);
 	}
 }
 add_action( 'wp_enqueue_scripts', 'wpcps_enqueue_public_assets' );
+
+/**
+ * Add data-noptimize attribute to the script tag to bypass Autoptimize and other compressors.
+ */
+function wpcps_add_noptimize_attribute( $tag, $handle, $src ) {
+	if ( 'wpcps-public-js' === $handle ) {
+		if ( false === strpos( $tag, 'data-noptimize' ) ) {
+			$tag = str_replace( '<script ', '<script data-noptimize="1" ', $tag );
+		}
+	}
+	return $tag;
+}
+add_filter( 'script_loader_tag', 'wpcps_add_noptimize_attribute', 10, 3 );
